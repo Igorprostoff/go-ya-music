@@ -1,77 +1,79 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
-	"path"
+	"strconv"
 
-	"github.com/Igorprostoff/go-ya-music/account"
-	"github.com/Igorprostoff/go-ya-music/utils"
+	"github.com/Igorprostoff/go-ya-music/internal/entities"
+	"github.com/Igorprostoff/go-ya-music/internal/utils"
 )
 
 var (
-	user_agent      = "Yandex-Music-API"
-	headers         = map[string][]string{"X-Yandex-Music-Client": {"YandexMusicAndroid/24023231"}}
-	default_timeout = 5
+	userAgent = "Yandex-Music-API"
+	headers   = map[string][]string{"X-Yandex-Music-Client": {"YandexMusicAndroid/24023231"}, "Authorization": {"OAuth "}}
+	defaultTimeout = 5
 )
 
 type Client struct {
-	token                 string
-	base_url              string
-	language              string
-	http_client           *http.Client
-	report_unknown_fields bool
-	device                string
+	token    string
+	baseUrl  string
+	language string
+	httpClient          *http.Client
+	reportUnknownFields bool
+	device              string
 }
 
 func (c *Client) Init(
-	token, base_url, language string,
-	report_unknown_fields bool,
-	http_client *http.Client,
+	token, baseUrl, language string,
+	reportUnknownFields bool,
+	httpClient *http.Client,
 ) error {
 	if token == "" {
 		return fmt.Errorf("unable to create client without token")
 	}
 	c.token = token
-
-	if !utils.In_array(language, []string{"en", "uz", "uk", "us", "ru", "kk", "hy"}) {
+	headers["Authorization"] = []string{headers["Authorization"][0] + token}
+	if !utils.InArray(language, []string{"en", "uz", "uk", "us", "ru", "kk", "hy"}) {
 		c.language = "en"
 	} else {
 		c.language = language
 	}
 
-	if base_url == "" {
-		c.base_url = "https://api.music.yandex.net"
+	if baseUrl == "" {
+		c.baseUrl = "https://api.music.yandex.net"
 	} else {
-		c.base_url = base_url
+		c.baseUrl = baseUrl
 	}
-	if http_client == nil {
-		c.http_client = http.DefaultClient
+	if httpClient == nil {
+		c.httpClient = http.DefaultClient
 	}
-	c.report_unknown_fields = report_unknown_fields
+	c.reportUnknownFields = reportUnknownFields
 	c.device = "os=Golang; os_version=; manufacturer=Igorprostoff;" +
 		" model=Yandex Music API; clid=; device_id=random; uuid=random"
 	return nil
 }
 
-func (c *Client) Account_status() (account.Status, error) {
-	var res account.Status
-	url, err := url.Parse(path.Join(c.base_url, "/account/status"))
+func (c *Client) AccountStatus() (entities.StatusResult, error) {
+	var result entities.StatusResult
+	strUrl, err := url.JoinPath(c.baseUrl, "/account/status")
 	if err != nil {
-		return res, err
+		return result, err
 	}
-	req := http.Request{Method: http.MethodGet, Header: headers, URL: url}
-	resp, err := c.http_client.Do(&req)
+	url, err := url.Parse(strUrl)
 	if err != nil {
-		return res, err
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return res, err
+		return result, err
 	}
 
-	return res, json.Unmarshal(body, &res)
+	req := http.Request{Method: http.MethodGet, Header: headers, URL: url}
+	resp, err := c.httpClient.Do(&req)
+	if err != nil {
+		return result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result, err
 }
