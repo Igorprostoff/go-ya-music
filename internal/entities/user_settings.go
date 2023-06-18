@@ -1,5 +1,10 @@
 package entities
 
+import (
+	"encoding/json"
+	"io"
+)
+
 type UserSettings struct {
 	Uid                       int    `json:"uid,omitempty"`
 	LastFmScrobblingEnabled   bool   `json:"lastFmScrobblingEnabled,omitempty"`
@@ -18,4 +23,17 @@ type UserSettings struct {
 	AdsDisabled               bool   `json:"adsDisabled,omitempty"`
 	DiskEnabled               bool   `json:"diskEnabled,omitempty"`
 	ShowDiskTracksInLibrary   bool   `json:"showDiskTracksInLibrary,omitempty"`
+}
+
+type UserSettingsResult struct {
+	ResponseWithoutResult
+	Result UserSettings
+}
+
+func (s *UserSettingsResult) ParseFromReader(i io.Reader) error {
+	b, err := io.ReadAll(i)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, s)
 }
