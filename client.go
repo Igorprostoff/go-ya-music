@@ -170,3 +170,28 @@ func (c *Client) AccountSettingsSetMultiple(data map[string]interface{}) (entiti
 	err = result.ParseFromReader(resp.Body)
 	return result.Result, err
 }
+
+func (c *Client) Settings() (entities.Settings, error) {
+	var result entities.SettingsResult
+	url, err := url.JoinPath(c.baseUrl, "/settings")
+	if err != nil {
+		return result.Result, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return result.Result, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return result.Result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result.Result, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result.Result, err
+}
