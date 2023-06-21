@@ -6,12 +6,19 @@ import (
 )
 
 type ResponseWithoutResult struct {
-	Data             map[string]interface{} `json:"data"`
-	InvocationInfo   InvocationInfo         `json:"invocationInfo"`
-	Error            string                 `json:"error"`
-	ErrorDescription string                 `json:"errorDescription"`
+	Data             map[string]interface{} `json:"data,omitempty"`
+	InvocationInfo   InvocationInfo         `json:"invocationInfo,omitempty"`
+	Error            string                 `json:"error,omitempty"`
+	ErrorDescription string                 `json:"errorDescription,omitempty"`
 }
 
+func (s *ResponseWithoutResult) ParseFromReader(i io.Reader) error {
+	b, err := io.ReadAll(i)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, s)
+}
 func (r *ResponseWithoutResult) ParseFromBody(body io.ReadCloser) error {
 	bodyBytes, err := io.ReadAll(body)
 	if err != nil {

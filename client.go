@@ -195,3 +195,108 @@ func (c *Client) Settings() (entities.Settings, error) {
 	err = result.ParseFromReader(resp.Body)
 	return result.Result, err
 }
+
+func (c *Client) PermissionAlerts() (entities.PermissionAlerts, error) {
+	var result entities.PermissionAlertsResult
+	url, err := url.JoinPath(c.baseUrl, "/permission-alerts")
+	if err != nil {
+		return result.Result, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return result.Result, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return result.Result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result.Result, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result.Result, err
+}
+
+func (c *Client) AccountExperiments() (entities.AccountExperiments, error) {
+	var result entities.AccountExperimentsResult
+	url, err := url.JoinPath(c.baseUrl, "/account/experiments")
+	if err != nil {
+		return result.Result, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return result.Result, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return result.Result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result.Result, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result.Result, err
+}
+
+func (c *Client) ConsumePromocode(promocode, language string) (entities.PromocodeStatus, error) {
+	var result entities.PromocodeStatusResult
+	url, err := url.JoinPath(c.baseUrl, "/account/consume-promo-code")
+	if err != nil {
+		return result.Result, err
+	}
+	data, err := json.Marshal(map[string]string{"code": promocode, "language": language})
+	if err != nil {
+		return result.Result, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	if err != nil {
+		return result.Result, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return result.Result, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result.Result, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result.Result, err
+}
+
+func (c *Client) GetLikesTracks(user_id string) (entities.Library, error) {
+	var result entities.LibraryResult
+
+	url, err := url.JoinPath(c.baseUrl, fmt.Sprintf("/users/%s/likes/tracks", user_id))
+	if err != nil {
+		return result.Result.Library, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return result.Result.Library, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return result.Result.Library, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return result.Result.Library, fmt.Errorf("yandex music api returned wrong code:" + strconv.Itoa(resp.StatusCode))
+	}
+	err = result.ParseFromReader(resp.Body)
+	return result.Result.Library, err
+}

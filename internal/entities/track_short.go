@@ -1,7 +1,7 @@
 package entities
 
 type TrackShort struct {
-	Id            int    `json:"id,omitempty"`
+	Id            string `json:"id,omitempty"`
 	Timestamp     string `json:"timestamp,omitempty"`
 	AlbumId       string `json:"albumId,omitempty"`
 	PlayCount     int    `json:"playCount,omitempty"`
